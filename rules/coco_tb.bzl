@@ -455,6 +455,7 @@ def _vcs_cocotb_test_suite(
         testcases_vname = "",
         tests_kwargs = {},
         add_ci_tags = True,
+        name_fsdb_after_test = False,
         **kwargs):
     """Runs a cocotb test with a vcs model.
 
@@ -492,12 +493,22 @@ def _vcs_cocotb_test_suite(
             tags = list(tc_tests_kwargs.pop("tags", []))
             if add_ci_tags:
                 tags.append("vcs_cocotb_single_test")
+
             test_args = tc_tests_kwargs.pop("test_args", [""])
+
+            # Fix spacing issue by separating arguments properly
+            clean_test_args = [arg for arg in test_args if arg]
+            clean_test_args.extend(["-cm_name", str(tc)])
+
+            # Apply correct VCS syntax for fsdb
+            if name_fsdb_after_test:
+                clean_test_args.append("+fsdbfile+{}_{}.fsdb".format(name, tc))
+
             vcs_cocotb_test(
                 name = "{}_{}".format(name, tc),
                 testcase = [tc],
                 tags = tags,
-                test_args = ["{} -cm_name {}".format(test_args[0], tc)] + test_args[1:],
+                test_args = clean_test_args,
                 verilog_sources = verilog_sources,
                 **tc_tests_kwargs
             )
@@ -509,6 +520,14 @@ def _vcs_cocotb_test_suite(
     tags.append("manual")
     if add_ci_tags:
         tags.append("vcs_cocotb_test_suite")
+
+    # Also handle the meta-target FSDB naming
+    if name_fsdb_after_test:
+        meta_test_args = meta_target_kwargs.pop("test_args", [""])
+        clean_meta_test_args = [arg for arg in meta_test_args if arg]
+        clean_meta_test_args.append("+fsdbfile+{}.fsdb".format(name))
+        meta_target_kwargs["test_args"] = clean_meta_test_args
+
     vcs_cocotb_test(
         name = name,
         tags = tags,
@@ -534,6 +553,7 @@ def cocotb_test_suite(name, testcases, simulators = ["verilator"], **kwargs):
     # Pop tests_kwargs from kwargs, if it exists.
     tests_kwargs = kwargs.pop("tests_kwargs", {})
     testcases_vname = kwargs.pop("testcases_vname", "")
+    name_fsdb_after_test = kwargs.pop("name_fsdb_after_test", False)
     for sim in simulators:
         sim_kwargs = {}
         sim_tests_kwargs = {}
@@ -599,6 +619,7 @@ def cocotb_test_suite(name, testcases, simulators = ["verilator"], **kwargs):
                 testcases_vname = testcases_vname,
                 tests_kwargs = sim_tests_kwargs,
                 add_ci_tags = False,
+                name_fsdb_after_test = name_fsdb_after_test,
                 **sim_kwargs
             )
         elif sim == "vcs":
@@ -611,6 +632,7 @@ def cocotb_test_suite(name, testcases, simulators = ["verilator"], **kwargs):
                 testcases = testcases,
                 testcases_vname = testcases_vname,
                 tests_kwargs = sim_tests_kwargs,
+                name_fsdb_after_test = name_fsdb_after_test,
                 **sim_kwargs
             )
         else:

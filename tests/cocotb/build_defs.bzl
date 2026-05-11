@@ -14,8 +14,8 @@
 
 """Common build arguments for cocotb tests."""
 
-load("//rules:coco_tb.bzl", "cocotb_test_suite")
 load("@coralnpu_hw//third_party/python:requirements.bzl", "requirement")
+load("//rules:coco_tb.bzl", "cocotb_test_suite")
 
 VERILATOR_BUILD_ARGS = [
     "-Wno-WIDTH",
@@ -102,6 +102,7 @@ def rvv_core_mini_axi_netlist_test_suite(
     cocotb_test_suite(
         name = name,
         simulators = ["vcs_netlist"],
+        name_fsdb_after_test = True,
         testcases = [
             "core_mini_axi_basic_write_read_memory",
             "core_mini_axi_run_wfi_in_all_slots",
