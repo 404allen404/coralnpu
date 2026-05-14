@@ -346,7 +346,6 @@ class FetchControl(p: Parameters) extends Module {
         val fetchAddr = Irrevocable(UInt(p.fetchAddrBits.W))
         val flushTx = Output(Bool())
         val bufferRequest = DecoupledVectorIO(new FetchInstruction(p), p.fetchInstrSlots)
-        val bufferSpaces = Input(UInt(log2Ceil(p.fetchInstrSlots * 2 + 1).W))
     })
 
     val lsb = log2Ceil(p.fetchDataBits / 8)
@@ -433,7 +432,7 @@ class FetchControl(p: Parameters) extends Module {
     io.fetchFault := MakeValid(fetchFaultValid, io.fetchData.bits.addr)
     faulted := fetchFaultValid
 
-    val sufficientBuffer = io.bufferSpaces >= predecode.count
+    val sufficientBuffer = io.bufferRequest.nReady >= predecode.count
     io.fetchData.ready := sufficientBuffer || fetchFaultValid
     // Send out results. All branch or flush, current or past, will make us
     // discard results.
@@ -524,7 +523,6 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
   instructionBuffer.io.feedIn <> ctrl.io.bufferRequest
   io.inst.lanes <> instructionBuffer.io.out.take(4)
   instructionBuffer.io.flush := io.iflush.valid || branch.valid || io.debug_pc.valid
-  ctrl.io.bufferSpaces := instructionBuffer.io.nSpace
 
   val pc = RegInit(0.U(p.fetchAddrBits.W))
   pc := Mux(instructionBuffer.io.out(0).valid, instructionBuffer.io.out(0).bits.addr, pc)

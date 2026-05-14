@@ -546,9 +546,7 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
 
   "ResetPC" in {
     simulate(new FetchControl(p)) { dut =>
-      // Upstream can accept 8 buffers
       dut.io.bufferRequest.nReady.poke(8.U)
-      dut.io.bufferSpaces.poke(8.U)
       dut.io.csr.value(0).poke(0x20000000.U)
       dut.reset.poke(true.B)
       dut.clock.step()
@@ -564,9 +562,7 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
   "Branch" in {
     simulate(new FetchControl(p)) { dut =>
       dut.clock.step()  // Clear reset.
-      // Upstream can accept 16 buffers
       dut.io.bufferRequest.nReady.poke(8.U)
-      dut.io.bufferSpaces.poke(16.U)
       dut.io.branch.valid.poke(true.B)
       dut.io.branch.bits.poke(0x30000000.U)
       dut.io.fetchData.valid.poke(true.B)
@@ -599,7 +595,6 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
       dut.clock.step()
 
       dut.io.bufferRequest.nReady.poke(8.U)
-      dut.io.bufferSpaces.poke(16.U)
       dut.clock.step()
       dut.io.fetchAddr.valid.expect(true.B)
       dut.io.fetchAddr.bits.expect(0x20000000)
@@ -616,9 +611,7 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
   "FetchWithBranch" in {
     simulate(new FetchControl(p)) { dut =>
       dut.clock.step()  // Clear reset.
-      // Upstream can accept 12 buffers
       dut.io.bufferRequest.nReady.poke(8.U)
-      dut.io.bufferSpaces.poke(12.U)
       dut.io.fetchData.valid.poke(true.B)
       dut.io.fetchData.bits.addr.poke(0x20000000)
       for (i <- 0 until dut.io.fetchData.bits.inst.length) {
@@ -637,9 +630,7 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
   "FetchJump" in {
     simulate(new FetchControl(p)) { dut =>
       dut.clock.step()  // Clear reset.
-      // Upstream can accept 12 buffers
       dut.io.bufferRequest.nReady.poke(8.U)
-      dut.io.bufferSpaces.poke(12.U)
       dut.io.fetchData.valid.poke(true.B)
       dut.io.fetchData.bits.addr.poke(0x20000000)
       for (i <- 0 until dut.io.fetchData.bits.inst.length) {
@@ -663,7 +654,6 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
 
       // Instruction buffer is full, cannot accept 8 instructions
       dut.io.bufferRequest.nReady.poke(4.U)
-      dut.io.bufferSpaces.poke(4.U)
 
       // Fetch initiation is NOT blocked
       dut.io.fetchAddr.valid.expect(1)
@@ -680,7 +670,6 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
 
       // Free up buffer space
       dut.io.bufferRequest.nReady.poke(8.U)
-      dut.io.bufferSpaces.poke(8.U)
 
       // Committing fetch results is now unblocked
       dut.io.fetchData.ready.expect(true.B)
